@@ -32,24 +32,33 @@
 
 3. 确定 JSON 解析方式：使用 Python 标准库 `json`，无需额外第三方依赖。
 
-4. 确定模块划分：
+4. 确定模块划分（含一处调整，见下方说明）：
 
 ```text
 ai-contest-host/
 ├── main.py                    # 程序入口，串联全流程
-├── requirements.txt           # 依赖：pyttsx3
+├── requirements.txt           # 依赖：pyttsx3==2.99
 ├── src/
 │   ├── __init__.py
-│   ├── parser.py              # 排行榜 JSON 解析
-│   ├── script.py              # 主持词生成
-│   ├── tts.py                 # 语音合成（TTS）
-│   └── player.py              # 音频播放
+│   ├── parser.py              # 排行榜 JSON 解析（标准库 json，字段容错）
+│   ├── script.py              # 主持词生成（数字转中文 + 播报文案）
+│   ├── tts.py                 # 语音合成与播放（pyttsx3）
 ├── data/
 │   └── sample_leaderboard.json  # 样例排行榜
-└── tests/                     # 单元测试
+└── tests/
+    ├── test_parser.py         # 解析模块单元测试
+    └── test_script.py         # 主持词模块单元测试
 ```
 
-5. 更新 `requirements.txt`，写入 `pyttsx3`。
+   **模块划分调整说明**：原规划含 `src/player.py`（音频播放），实际落地时并入 `src/tts.py`。原因是 pyttsx3 的 `say()` + `runAndWait()` 本身即「合成 + 播放」一体，单独拆播放模块属过度设计。
+
+5. 更新 `requirements.txt`，写入 `pyttsx3==2.99`（固定版本保证可复现）。
+
+6. **提前完成部分第 3 天内容**（原计划排在第 3 天，因依赖清晰顺带完成）：
+   - 编写样例排行榜 `data/sample_leaderboard.json`，形成「字段规范（contest + teams）由解析器与样例文件双端约定」；
+   - 实现 `src/parser.py` 解析模块，支持结构容错（队伍列表可放 `teams`/`rankings`/`rows` 等）与字段容错（中英文别名、缺失回退默认值）；
+   - 实现 `src/script.py` 最小可用版主持词生成（含 `number_to_chinese` 数字转中文，任意非负整数）；
+   - 编写 `tests/test_parser.py`、`tests/test_script.py` 单元测试，共 11 例全部通过。
 
 ## 四、当日主题必写块：必做 / 不做 / 验收说法 / 风险
 
@@ -61,14 +70,18 @@ ai-contest-host/
 
 ### 2. 不做（Won't）
 
-- 暂不实现完整的解析与主持词生成逻辑（第 3、4 天完成）
 - 暂不处理特殊队名读音映射（第 4 天主持词阶段处理）
+- 不做 Web 界面、数据库持久化、多人实时联机、账号登录系统（第 1 天已定）
+
+> 注：原「暂不实现完整的解析与主持词生成逻辑」条目因解析模块与最小版主持词已提前完成而移除，剩余部分（主持词模板增强）顺延至第 3 天。
 
 ### 3. 验收说法（Acceptance）
 
 **验收步骤：**
 
-运行 TTS 最小 demo → 听到中文语音播放。
+运行 `python main.py` → 程序读取样例排行榜 → 打印并播报完整主持词 → 听到中文语音播放。
+
+（说明：`main.py` 已从 TTS 最小 demo 演进为完整链路「读 JSON → 生成主持词 → 播报」，最小 demo 的合成/播放逻辑沉淀为 `src/tts.py`，故验收对象同步更新。）
 
 **用户故事：**
 
@@ -78,13 +91,14 @@ ai-contest-host/
 
 | 风险 | 说明 | 应对 |
 | --- | --- | --- |
-| 系统缺中文语音包 | Windows 无中文 TTS 语音时 pyttsx3 无法正常播中文 | 第 3 天解析前先确认系统语音包，缺失则启用 edge-tts 备选 |
+| 系统缺中文语音包 | Windows 无中文 TTS 语音时 pyttsx3 无法正常播中文 | 第 3 天实机验证前先确认系统语音包，缺失则启用 edge-tts 备选 |
 | 音色机械影响听感 | pyttsx3 中文音色偏机械 | 第 6 天做语速/音量调优，必要时切换 edge-tts |
 
 ## 五、自检
 
 - TTS 能否在目标环境发声：可以，`pyttsx3` 最小 demo 已在本机跑通。
 - 选型是否契合「尽量离线」约束：是，主方案纯离线，边缘场景留 edge-tts 备选。
+- 模块划分是否落地可运行：是，解析、主持词、TTS 三模块均已实现并通过 11 例单元测试。
 
 ## 六、问题与明日计划
 
@@ -94,5 +108,6 @@ ai-contest-host/
 
 **明日（第 3 天）计划：**
 
-- 定义排行榜 JSON 数据格式规范，编写样例文件。
-- 实现 `src/parser.py` 解析模块及单元测试。
+- 实机验证全链路播报（`python main.py`），确认中文语音正常发声。
+- 完善主持词模板（多场次播报、获奖名单等）。
+- 处理特殊队名读音映射。
