@@ -104,6 +104,39 @@ class TestRollScript(unittest.TestCase):
         segments = generate_roll_script(self.lb)
         self.assertIn("现在是北京时间", segments[1])
 
+    def test_roll_opener_variants_by_round(self):
+        # 场次不同 -> 开场白变体轮换
+        lb2 = Leaderboard(contest_name="测试赛", round_no=2, teams=self.lb.teams)
+        segments = generate_roll_script(lb2, now=datetime(2026, 8, 19, 14, 5))
+        self.assertIn("榜单即将滚动", segments[0])
+
+    def test_roll_same_solved_penalty_teaser(self):
+        # 连续两支队伍解题数相同 -> 悬念句强调罚时决胜（需 6 队使普通位次出现）
+        lb6 = Leaderboard(
+            contest_name="测试赛",
+            round_no=1,
+            teams=[
+                Team(rank=1, name="A", solved=5),
+                Team(rank=2, name="B", solved=5),
+                Team(rank=3, name="C", solved=4),
+                Team(rank=4, name="D", solved=4),
+                Team(rank=5, name="E", solved=4),
+                Team(rank=6, name="F", solved=3),
+            ],
+        )
+        segments = generate_roll_script(lb6, now=datetime(2026, 8, 19, 14, 5))
+        # i=0 F -> i=1 E -> i=2 D（与上一位 E 同为 4 题）
+        self.assertIn("比拼的就是罚时", segments[7])
+        self.assertIn("D", segments[8])
+
+    def test_roll_zero_solved_champion(self):
+        lb = Leaderboard(contest_name="测试赛", round_no=1, teams=[Team(rank=1, name="独苗队", solved=0)])
+        segments = generate_roll_script(lb, now=datetime(2026, 8, 19, 14, 5))
+        # 仅 1 队时直接走冠军台词，零题也有专属表达
+        self.assertEqual(len(segments), 3 + 2 * 1 + 1)
+        self.assertIn("冠军诞生", segments[4])
+        self.assertIn("独苗队", segments[4])
+
 
 if __name__ == "__main__":
     unittest.main()
