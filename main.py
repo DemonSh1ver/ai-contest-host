@@ -1,61 +1,57 @@
 """算法竞赛 AI 智能主持人 - 程序入口。
 
-当前阶段：验证 TTS 最小链路（文字 → 语音 → 播放）。
-后续将逐步接入：排行榜 JSON 解析 → 主持词生成。
+完整链路：排行榜 JSON → 数据解析 → 生成主持词 → TTS 语音 → 播放。
+
+用法：
+    python main.py                 # 普通播报（默认样例数据）
+    python main.py 榜单.json        # 播报指定榜单
+    python main.py --roll          # 滚榜模式（逐队揭晓，营造悬念）
 """
 
+import argparse
 import sys
+import time
 
-import pyttsx3
-
-
-def init_engine():
-    """初始化 TTS 引擎并做基础配置。
-
-    - 优先选择系统里的中文语音（避免英文语音朗读中文）。
-    - 设置适合播报的语速与音量。
-    """
-    engine = pyttsx3.init()
-
-    # 列出所有可用语音，优先选中文本地化语音
-    voices = engine.getProperty("voices")
-    chinese_voice = None
-    if isinstance(voices, list):
-        for voice in voices:
-            voice_id = str(getattr(voice, "id", ""))
-            voice_name = str(getattr(voice, "name", ""))
-            if "zh" in voice_id.lower() or "chinese" in voice_name.lower():
-                chinese_voice = voice_id
-                break
-
-    if chinese_voice:
-        engine.setProperty("voice", chinese_voice)
-        print("[TTS] 已选用中文语音")
-    else:
-        print("[TTS] 警告：未检测到中文语音，可能以英文语音朗读中文，建议安装中文语音包")
-
-    # 语速：默认约 200，中文播报建议稍慢
-    engine.setProperty("rate", 180)
-    # 音量：0.0 ~ 1.0
-    engine.setProperty("volume", 0.9)
-
-    return engine
-
-
-def speak(engine, text):
-    """将文本转为语音并播放。"""
-    engine.say(text)
-    engine.runAndWait()
+from src.parser import parse_leaderboard_file
+from src.script import generate_roll_script, generate_script
+from src.tts import init_engine, speak
 
 
 def main():
+    parser = argparse.ArgumentParser(description="算法竞赛 AI 智能主持人")
+    parser.add_argument("json_path", nargs="?", default="data/sample_leaderboard.json",
+                        help="排行榜 JSON 文件路径（默认样例数据）")
+    parser.add_argument("--roll", action="store_true",
+                        help="启用滚榜模式：从最后一名开始逐队揭晓，营造悬念")
+    args = parser.parse_args()
+
+    try:
+        leaderboard = parse_leaderboard_file(args.json_path)
+    except FileNotFoundError:
+        print(f"找不到排行榜文件：{args.json_path}")
+        sys.exit(1)
+    except ValueError as exc:
+        print(f"排行榜 JSON 解析失败：{exc}")
+        sys.exit(1)
+
     engine = init_engine()
 
-    # 支持命令行传入文本，否则使用默认欢迎语
-    text = sys.argv[1] if len(sys.argv) > 1 else "各位选手，大家好，欢迎来到算法竞赛现场。"
-
-    print(f"正在播报：{text}")
-    speak(engine, text)
+    if args.roll:
+        segments = generate_roll_script(leaderboard)
+        print("===== 滚榜主持词（逐段播报）=====")
+        for seg in segments:
+            print(seg)
+        print("==================================")
+        for seg in segments:
+            speak(engine, seg)
+            # 段间停顿，配合 TTS 让悬念/揭晓节奏更明显
+            time.sleep(1.2)
+    else:
+        text = generate_script(leaderboard)
+        print("===== 主持词 =====")
+        print(text)
+        print("==================")
+        speak(engine, text)
 
 
 if __name__ == "__main__":
