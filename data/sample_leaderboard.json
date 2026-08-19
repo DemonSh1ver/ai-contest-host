@@ -1,0 +1,12 @@
+{
+  "contest": {
+    "name": "示例高校新生算法竞赛",
+    "round": 1
+  },
+  "teams": [
+    { "rank": 1, "name": "AC 冲鸭", "solved": 5, "penalty": 300 },
+    { "rank": 2, "name": "不会就选C", "solved": 4, "penalty": 260 },
+    { "rank": 3, "name": "红名大神", "solved": 4, "penalty": 400 },
+    { "rank": 4, "name": "摸鱼队", "solved": 3, "penalty": 180 }
+  ]
+}
