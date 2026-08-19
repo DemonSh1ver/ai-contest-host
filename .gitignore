@@ -7,3 +7,11 @@ venv/
 
 # 运行/临时产物
 *.log
+
+# 超过第一天的代码（保留在本地，暂不上传）
+src/
+tests/
+data/
+requirements.txt
+main.py
+reports/day02.md

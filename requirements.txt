@@ -1,9 +1,0 @@
-# AI Contest Host 依赖清单
-#
-# 选定方案（离线优先）：
-#   pyttsx3 - 离线 TTS 主方案，Windows 下走系统 SAPI5 语音引擎。
-#            需系统已安装中文 TTS 语音包（如 Windows 的 Huihui/Microsoft 中文语音）。
-#
-# 备选方案（未启用，如需切换请取消注释并 pip install）：
-#   edge-tts - 在线 TTS，中文音质更自然；仅在系统缺中文语音包时启用。
-pyttsx3==2.99
