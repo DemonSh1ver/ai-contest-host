@@ -20,17 +20,62 @@
 
 2026-08-19 至 2026-08-27（共 9 天）。
 
+## 方案组成
+
+按第 2 天确定的技术选型，把链路拆成 4 个模块 + 1 个入口，模块间为单向数据流（`parser` 产榜单 → `roll` 产揭晓顺序 → `script` 产中文文本 → `tts` 播放）：
+
+| 模块 | 职责 |
+| --- | --- |
+| `src/parser.py` | 读取排行榜 JSON，解析为队伍列表（标准库 `json`） |
+| `src/roll.py` | 给出「从最后一名到第一名」的滚榜揭晓顺序 |
+| `src/script.py` | 按滚榜顺序生成中文主持词（普通 / 滚榜模式） |
+| `src/tts.py` | 把主持词文本转为中文语音并播放（`pyttsx3`，离线） |
+| `main.py` | 串联上述四层，提供命令行入口 |
+
 ## 项目基础结构
 
 ```text
 ai-contest-host/
-├── README.md          # 项目说明
-├── requirements.txt   # 依赖（暂空，待定技术栈）
-├── src/               # 源码目录
-├── data/              # 数据目录（排行榜 JSON 等）
-└── tests/             # 测试目录
+├── README.md                        # 项目说明
+├── main.py                          # 程序入口
+├── requirements.txt                 # 依赖（pyttsx3）
+├── src/
+│   ├── parser.py                    # 榜单解析
+│   ├── roll.py                      # 滚榜揭晓顺序
+│   ├── script.py                    # 主持词生成
+│   └── tts.py                       # 语音合成播放
+├── data/
+│   └── sample_leaderboard.json      # 样例排行榜
+├── reports/                         # 每日实践报告
+└── tests/                           # 单元测试
+```
+
+## 使用方法
+
+### 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 播放样例排行榜（普通模式）
+
+```bash
+python main.py
+```
+
+### 滚榜模式（从最后一名倒序逐队揭晓）
+
+```bash
+python main.py --roll
+```
+
+### 播放自定义排行榜
+
+```bash
+python main.py path/to/leaderboard.json
 ```
 
 ## 当前开发阶段
 
-处于项目骨架搭建阶段，尚未实现具体业务功能。
+已完成第 1~2 天工作：确认选题、技术选型，并跑通 解析 → 滚榜 → 主持词 → TTS 播放 的完整链路，`python main.py` 可实际出声。滚榜的封榜解冻与罚时重算尚未实现（临时假实现，计划第 5~6 天补真）。
