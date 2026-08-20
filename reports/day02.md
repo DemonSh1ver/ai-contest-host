@@ -17,7 +17,30 @@
 
 **模块依赖方向图：**
 
-![模块依赖方向图](module_diagram.jpg)
+```mermaid
+graph LR
+    subgraph External["外部使用者"]
+        User["赛事组织者 / 主持人<br/>(CLI 调用者)"]
+    end
+
+    subgraph Internal["内部主要模块"]
+        Main["main.py<br/>串联入口"]
+        Parser["src/parser.py<br/>JSON 解析"]
+        Roll["src/roll.py<br/>滚榜揭晓顺序"]
+        Script["src/script.py<br/>主持词生成"]
+        TTS["src/tts.py<br/>TTS 合成与播放"]
+    end
+
+    User -- "放入榜单 JSON<br/>启动程序" --> Main
+    Main -- "解析" --> Parser
+    Main -- "滚榜排序" --> Roll
+    Main -- "生成主持词" --> Script
+    Main -- "朗读播报" --> TTS
+    TTS -- "音频 → 扬声器" --> User
+
+    Parser -. "Leaderboard" .-> Roll
+    Roll -. "RollStep 列表" .-> Script
+```
 
 > 依赖方向 = 数据流向。外部使用者只与 main.py 入口交互；内部模块间为单向调用、无反向依赖。具体每一步调用的接口见下方职责表。
 
@@ -57,7 +80,7 @@
 
 ## 五、技术选型
 
-### 1. 语言与解析方式
+**1. 语言与解析方式**
 
 - **方案 A：Python 标准库 `json`（入选）**
   - 入选理由：零第三方依赖，符合课内"离线、无外部包"的交付边界；榜单格式多变可用字段别名 + 默认值容错。
@@ -65,7 +88,7 @@
 - **方案 B：`pandas.read_json`（放弃）**
   - 放弃理由：引入重依赖 `pandas`，仅为解析一个榜单文件得不偿失，且与"依赖最小化"原则冲突。
 
-### 2. TTS 语音合成
+**2. TTS 语音合成**
 
 - **方案 A：`pyttsx3`（入选，主方案）**
   - 入选理由：离线、免费，Windows 下走系统 SAPI5，免 API Key、无配额限制，直接"合成 + 播放"一体，开发链路最短。
