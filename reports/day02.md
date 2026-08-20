@@ -13,17 +13,28 @@
 
 ## 三、组成部分
 
-把链路拆成 4 个模块 + 1 个入口，模块间为单向数据流（`parser` 产榜单 → `roll` 产揭晓顺序 → `script` 产中文文本 → `tts` 播放），无循环依赖。
+系统外部只有一位使用者（赛事主持人/组织者），内部为 4 个模块 + 1 个入口，模块间为单向数据流，无循环依赖。
+
+**模块依赖方向图（够用画法）：**
+
+```mermaid
+flowchart LR
+    User[使用者<br/>主持人/组织者] -->|放入榜单 JSON| Parser[parser.py<br/>读 JSON]
+    Parser -->|Leaderboard| Roll[roll.py<br/>滚榜揭晓顺序]
+    Roll -->|RollStep 列表| Script[script.py<br/>生成主持词]
+    Script -->|主持词文本| TTS[tts.py<br/>语音合成播放]
+    TTS -->|扬声器出声| User
+```
 
 本项目重心在「主持人说话」（`script` + `tts`），解析与滚榜只做必要的数据准备：
 
-| 模块 | 职责 | 定位 |
-| --- | --- | --- |
-| `src/parser.py` | 读取排行榜 JSON，解析为队伍列表 | 入口，不做过度容错 |
-| `src/roll.py` | 给出「从最后一名到第一名」的揭晓顺序 | 辅助，只负责揭晓顺序 |
-| `src/script.py` | 按滚榜顺序生成中文主持词（普通 / 滚榜模式） | **重点**，主持说话的文案核心 |
-| `src/tts.py` | 把主持词文本转为中文语音并播放 | **重点**，主持说话的语音出口 |
-| `main.py` | 串联上述四层，提供命令行入口 | 串联 |
+| 模块 | 输入 | 输出 | 依赖谁 | 谁负责 |
+| --- | --- | --- | --- | --- |
+| `src/parser.py` | 排行榜 JSON 文件 | `Leaderboard`（含队伍列表） | 无 | 姚子秋 |
+| `src/roll.py` | `Leaderboard` | `RollStep` 列表（揭晓顺序） | `parser` | 姚子秋 |
+| `src/script.py` | `Leaderboard` + `RollStep` 列表 | 中文主持词文本 | `parser`、`roll` | 姚子秋 |
+| `src/tts.py` | 主持词文本 | 语音播放（扬声器出声） | 无（不依赖业务模块） | 姚子秋 |
+| `main.py` | 命令行参数 + 榜单路径 | 串联四层完成播报 | `parser`、`roll`、`script`、`tts` | 姚子秋 |
 
 ## 四、与需求的对应
 
@@ -39,6 +50,15 @@
 **处理办法说明：**
 - 「按滚榜顺序生成主持词」这一条拆成两段承担：`roll.py` 只负责"从最后一名到第一名的揭晓顺序"，`script.py` 负责"中文文案"的生成。
 - 「不做」清单里的 Web 界面、数据库、多人联机、账号、计分，均无对应模块，属预期内的"无人承担"，即明确不做，故不安排模块。
+
+**需求 → 模块 → 演示路径对照：**
+
+| 第 1 天核心需求 | 负责模块 | 第 5 天是否演示该路径 |
+| --- | --- | --- |
+| 导入榜单 JSON | `parser.py` | 是（放入样例 JSON，解析出队伍） |
+| 按滚榜顺序生成主持词 | `roll.py` + `script.py` | 是（倒序逐队揭晓 + 中文文案） |
+| TTS 语音播放 | `tts.py` | 是（扬声器同步朗读） |
+| 本地一键启动 | `main.py` | 是（`python main.py` 跑通全链路） |
 
 ## 五、技术选型
 
@@ -85,3 +105,4 @@
 **明日安排（第 3 天）：**
 - 完成 `src/script.py`（普通模式 + 滚榜模式）并补充 `tests/test_script.py`。
 - 约定 `parser` / `roll` / `script` 之间的数据接口，跑通 `parser → roll → script` 的纯文本链路（暂不接 TTS）。
+- 写明榜单 JSON 样例的字段含义（`contest.name` / `contest.round` / `teams[].rank` / `name` / `solved` / `penalty` 各自代表什么、类型与必填/选填），落实课题"字段含义写进报告"的要求。
