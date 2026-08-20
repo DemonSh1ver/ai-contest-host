@@ -18,23 +18,38 @@
 **模块依赖方向图（够用画法）：**
 
 ```mermaid
-flowchart LR
-    User[使用者<br/>主持人/组织者] -->|放入榜单 JSON| Parser[parser.py<br/>读 JSON]
-    Parser -->|Leaderboard| Roll[roll.py<br/>滚榜揭晓顺序]
-    Roll -->|RollStep 列表| Script[script.py<br/>生成主持词]
-    Script -->|主持词文本| TTS[tts.py<br/>语音合成播放]
-    TTS -->|扬声器出声| User
+graph LR
+    User["赛事组织者 / 主持人<br/>(CLI 调用者)"]
+    Main["main.py<br/>程序入口"]
+    Parser["src/parser.py<br/>JSON 解析"]
+    Roll["src/roll.py<br/>滚榜揭晓顺序"]
+    Script["src/script.py<br/>主持词生成"]
+    TTS["src/tts.py<br/>TTS 合成与播放"]
+    Data[("data/<br/>sample_leaderboard.json")]
+
+    User -- "CLI: python main.py [path] [--roll]" --> Main
+    Main -- "读取 JSON 文件" --> Data
+    Main -- "parse_leaderboard_file(path)" --> Parser
+    Parser -- "Leaderboard" --> Main
+    Main -- "reveal_order(lb.teams)" --> Roll
+    Roll -- "List<RollStep>" --> Main
+    Main -- "generate_script / generate_roll_script(lb[, steps])" --> Script
+    Script -- "中文主持词 str" --> Main
+    Main -- "speak(engine, text)" --> TTS
+    TTS -- "音频播放" --> User
 ```
+
+> 依赖方向 = 数据流向。所有模块间为单向调用，无反向依赖。
 
 本项目重心在「主持人说话」（`script` + `tts`），解析与滚榜只做必要的数据准备：
 
-| 模块 | 输入 | 输出 | 依赖谁 | 谁负责 |
+| 模块 | 输入 | 输出 | 依赖（被谁调用 / 调用谁） | 负责 |
 | --- | --- | --- | --- | --- |
-| `src/parser.py` | 排行榜 JSON 文件 | `Leaderboard`（含队伍列表） | 无 | 姚子秋 |
-| `src/roll.py` | `Leaderboard` | `RollStep` 列表（揭晓顺序） | `parser` | 姚子秋 |
-| `src/script.py` | `Leaderboard` + `RollStep` 列表 | 中文主持词文本 | `parser`、`roll` | 姚子秋 |
-| `src/tts.py` | 主持词文本 | 语音播放（扬声器出声） | 无（不依赖业务模块） | 姚子秋 |
-| `main.py` | 命令行参数 + 榜单路径 | 串联四层完成播报 | `parser`、`roll`、`script`、`tts` | 姚子秋 |
+| `main.py` | CLI 参数（`json_path`、`--roll`） | 语音播放 + 控制台打印 | 被：用户 / 调用：parser、roll、script、tts | 串联「解析 → 滚榜 → 主持词 → 播报」全流程，处理命令行与错误码 |
+| `src/parser.py` | JSON 文本（字符串） | `Leaderboard`（含 `teams`） | 被：main / 调用：标准库 `json` | 把排行榜文件解析成结构化对象；只做最基础字段读取，队伍上限 5 |
+| `src/roll.py` | `List[Team]` | `List<RollStep>`（每步：揭晓队伍 + 当前榜单） | 被：main / 调用：无第三方依赖 | 按"过题数降序、罚时升序"给出倒序揭晓顺序；每步重排一次 |
+| `src/script.py` | `Leaderboard`（+ 可选 `List<RollStep>`） | 纯文本 `str`（适合 TTS） | 被：main / 调用：内部 `_num_to_cn` 数字转中文 | 按"开场 → 逐队揭晓 → 结果 → 颁奖 → 结束"顺序拼中文主持词；普通 / 滚榜两套入口 |
+| `src/tts.py` | 中文 `str` | 音频播放（系统 SAPI5） | 被：main / 调用：`pyttsx3` | 选择系统中文音色 + 设置语速音量 + `say/runAndWait` 播放 |
 
 ## 四、与需求的对应
 
