@@ -17,30 +17,7 @@
 
 **模块依赖方向图：**
 
-```mermaid
-graph LR
-    subgraph External["外部使用者"]
-        User["赛事组织者 / 主持人<br/>(CLI 调用者)"]
-    end
-
-    subgraph Internal["内部主要模块"]
-        Main["main.py<br/>串联入口"]
-        Parser["src/parser.py<br/>JSON 解析"]
-        Roll["src/roll.py<br/>滚榜揭晓顺序"]
-        Script["src/script.py<br/>主持词生成"]
-        TTS["src/tts.py<br/>TTS 合成与播放"]
-    end
-
-    User -- "放入榜单 JSON<br/>启动程序" --> Main
-    Main -- "解析" --> Parser
-    Main -- "滚榜排序" --> Roll
-    Main -- "生成主持词" --> Script
-    Main -- "朗读播报" --> TTS
-    TTS -- "音频 → 扬声器" --> User
-
-    Parser -. "Leaderboard" .-> Roll
-    Roll -. "RollStep 列表" .-> Script
-```
+![模块依赖方向图](module_diagram.jpg)
 
 > 依赖方向 = 数据流向。外部使用者只与 main.py 入口交互；内部模块间为单向调用、无反向依赖。具体每一步调用的接口见下方职责表。
 
