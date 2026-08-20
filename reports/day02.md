@@ -19,27 +19,30 @@
 
 ```mermaid
 graph LR
-    User["赛事组织者 / 主持人<br/>(CLI 调用者)"]
-    Main["main.py<br/>程序入口"]
-    Parser["src/parser.py<br/>JSON 解析"]
-    Roll["src/roll.py<br/>滚榜揭晓顺序"]
-    Script["src/script.py<br/>主持词生成"]
-    TTS["src/tts.py<br/>TTS 合成与播放"]
-    Data[("data/<br/>sample_leaderboard.json")]
+    subgraph External["外部使用者"]
+        User["赛事组织者 / 主持人<br/>(CLI 调用者)"]
+    end
 
-    User -- "CLI: python main.py [path] [--roll]" --> Main
-    Main -- "读取 JSON 文件" --> Data
-    Main -- "parse_leaderboard_file(path)" --> Parser
-    Parser -- "Leaderboard" --> Main
-    Main -- "reveal_order(lb.teams)" --> Roll
-    Roll -- "List<RollStep>" --> Main
-    Main -- "generate_script / generate_roll_script(lb[, steps])" --> Script
-    Script -- "中文主持词 str" --> Main
-    Main -- "speak(engine, text)" --> TTS
-    TTS -- "音频播放" --> User
+    subgraph Internal["内部主要模块"]
+        Main["main.py<br/>串联入口"]
+        Parser["src/parser.py<br/>JSON 解析"]
+        Roll["src/roll.py<br/>滚榜揭晓顺序"]
+        Script["src/script.py<br/>主持词生成"]
+        TTS["src/tts.py<br/>TTS 合成与播放"]
+    end
+
+    User -- "放入榜单 JSON<br/>启动程序" --> Main
+    Main -- "解析" --> Parser
+    Main -- "滚榜排序" --> Roll
+    Main -- "生成主持词" --> Script
+    Main -- "朗读播报" --> TTS
+    TTS -- "音频 → 扬声器" --> User
+
+    Parser -. "Leaderboard" .-> Roll
+    Roll -. "RollStep 列表" .-> Script
 ```
 
-> 依赖方向 = 数据流向。所有模块间为单向调用，无反向依赖。
+> 依赖方向 = 数据流向。外部使用者只与 main.py 入口交互；内部模块间为单向调用、无反向依赖。具体每一步调用的接口见下方职责表。
 
 本项目重心在「主持人说话」（`script` + `tts`），解析与滚榜只做必要的数据准备：
 
