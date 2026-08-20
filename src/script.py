@@ -16,7 +16,7 @@
 from typing import List
 
 from .parser import Leaderboard, Team
-from .roll import RollStep, _sort_teams
+from .roll import RollStep
 
 
 # 数字转中文读数，用于把「第 5 名」「5 题」读成「第五名」「五题」
@@ -49,10 +49,17 @@ def _solved_cn(solved: int) -> str:
 # ---------- 各环节主持词 ----------
 
 def _opening(lb: Leaderboard) -> str:
-    """开场：简短介绍比赛，调动现场气氛。"""
-    if lb.contest_name:
-        return f"各位选手，大家好！欢迎来到{lb.contest_name}比赛现场。比赛即将开始，请各位选手做好准备。"
-    return "各位选手，大家好！欢迎来到本次算法竞赛现场。比赛即将开始，请各位选手做好准备。"
+    """赛后滚榜开场：说明比赛已结束，进入揭晓环节。
+
+    主路径场景是「赛后滚榜」而非赛前开场，所以不再说"比赛即将开始"，
+    改为向现场观众交代成绩已就绪、即将开始倒序揭晓。
+    """
+    return (
+        "各位老师、同学，大家好！\n"
+        "经过紧张激烈的比赛，最终成绩已经产生。\n"
+        "接下来，让我们进入最激动人心的滚榜环节！\n"
+        "请大家把目光锁定大屏幕，让我们从最后一名开始，逐步揭晓今天的最终排名。"
+    )
 
 
 def _reveal_line(team: Team) -> str:

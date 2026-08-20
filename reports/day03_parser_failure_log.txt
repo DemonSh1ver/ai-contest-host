@@ -1,0 +1,27 @@
+=== Day 3 parser 真实失败结果 ===
+捕获时间: 2026-08-21 (Day 3)
+测试目标: 非法 JSON / 错误 teams 类型的真实异常行为
+
+--- case: invalid_json ---
+input  : '{bad json'
+type   : JSONDecodeError
+message: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+
+--- case: top_level_array ---
+input  : '[1, 2, 3]'
+type   : ValueError
+message: 排行榜 JSON 顶层必须是对象
+
+--- case: teams_int ---
+input  : '{"teams": 123}'
+type   : ValueError
+message: 排行榜 JSON 的 teams 必须是列表，实际为 int
+
+--- case: teams_str ---
+input  : '{"teams": "not a list"}'
+type   : ValueError
+message: 排行榜 JSON 的 teams 必须是列表，实际为 str
+
+=== 总结 ===
+以上 4 个用例均按 parser 现有逻辑抛出明确异常，程序在解析阶段终止，
+不会进入 roll / script / tts，符合 Day 3 接口约定。

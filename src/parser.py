@@ -53,8 +53,14 @@ def parse_leaderboard_text(text: str) -> Leaderboard:
     name = str(contest.get("name", ""))
     round_no = int(contest.get("round", 1))
 
+    teams_raw = data.get("teams", [])
+    if not isinstance(teams_raw, list):
+        raise ValueError(
+            f"排行榜 JSON 的 teams 必须是列表，实际为 {type(teams_raw).__name__}"
+        )
+
     teams = []
-    for item in data.get("teams", []):
+    for item in teams_raw:
         teams.append(
             Team(
                 rank=int(item.get("rank", 0)),

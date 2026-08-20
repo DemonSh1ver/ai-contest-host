@@ -5,8 +5,8 @@ __pycache__/
 .venv/
 venv/
 
+# IDE 临时文件
+.vscode/
+
 # 运行/临时产物
 *.log
-
-# 尚未交付的测试目录（保留在本地，暂不上传）
-tests/

@@ -1,0 +1,40 @@
+# Day 3 失败一例：实际命令行执行记录
+
+> 本文件是 Day 3「调用约定」失败一例的真实证据，直接来自命令行实跑，未做任何修饰。
+
+## 执行命令
+
+```bash
+python main.py test_invalid.json --roll
+```
+
+## 输入文件 test_invalid.json
+
+```json
+{
+  "teams": 123
+}
+```
+
+## 实际输出（真实 traceback）
+
+```text
+Traceback (most recent call last):
+  File "C:\Users\yyyyyyadminister\CodeBuddy\20260819121212\ai-contest-host\main.py", line 47, in <module>
+    main(sys.argv[1:])
+  File "C:\Users\yyyyyyadminister\CodeBuddy\20260819121212\ai-contest-host\main.py", line 30, in main
+    lb = parse_leaderboard_file(path)
+  File "C:\Users\yyyyyyadminister\CodeBuddy\20260819121212\ai-contest-host\src\parser.py", line 82, in parse_leaderboard_file
+    return parse_leaderboard_text(Path(path).read_text(encoding="utf-8-sig"))
+  File "C:\Users\yyyyyyadminister\CodeBuddy\20260819121212\ai-contest-host\src\parser.py", line 58, in parse_leaderboard_text
+    raise ValueError(
+        f"排行榜 JSON 的 teams 必须是列表，实际为 {type(teams_raw).__name__}"
+    )
+ValueError: 排行榜 JSON 的 teams 必须是列表，实际为 int
+```
+
+## 说明
+
+- 程序在解析阶段（`parse_leaderboard_file`）抛出 `ValueError`，运行终止；
+- 未进入 `roll`、`script`、`tts`，错误数据未继续传播；
+- 当前 `main.py` 未捕获异常，直接输出完整 traceback（非友好报错）。此问题**不在 Day 3 处理**，记入 Day 4「工程起步 / 异常处理」任务。
