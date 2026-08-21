@@ -39,6 +39,7 @@ ai-contest-host/
 ├── README.md                        # 项目说明
 ├── main.py                          # 程序入口
 ├── requirements.txt                 # 依赖（pyttsx3）
+├── test_invalid.json                # 失败用例输入（teams 类型错误）
 ├── src/
 │   ├── parser.py                    # 榜单解析
 │   ├── roll.py                      # 滚榜揭晓顺序
@@ -46,8 +47,12 @@ ai-contest-host/
 │   └── tts.py                       # 语音合成播放
 ├── data/
 │   └── sample_leaderboard.json      # 样例排行榜
-├── reports/                         # 每日实践报告
+├── reports/                         # 每日实践报告与失败记录
+│   ├── day01.md / day02.md / day03.md
+│   └── day03_failure_example.txt / day03_parser_failure_log.txt
 └── tests/                           # 单元测试
+    ├── test_script.py               # 主持词生成测试
+    └── test_parser_errors.py        # parser 异常输入测试
 ```
 
 ## 使用方法
@@ -82,6 +87,6 @@ python main.py path/to/leaderboard.json
 
 - 第 1 天：确认选题与 MVP 边界（单机命令行，不做计分 / 排名计算）。
 - 第 2 天：确定方案组成与技术选型（`json` + `pyttsx3` + `unittest`）。
-- 第 3 天：固定主路径数据对象（`Team` / `Leaderboard` / `RollStep`）与调用约定，跑通 `解析 → 滚榜 → 主持词 → TTS 播放` 完整链路，`python main.py` 可实际出声。
+- 第 3 天：固定主路径数据对象（`Team` / `Leaderboard` / `RollStep` / 主持词文本）与调用约定（含成功、失败案例），跑通 `解析 → 滚榜 → 主持词 → TTS 播放` 完整链路，`python main.py` 可实际出声。
 
-当前滚榜为 MVP 版：按输入榜单的名次（`rank`）倒序揭晓，不重新计算得分与排名。真实滚榜（封榜解冻、罚时重算、排名变化）属于 MVP 之外的特色增强，计划第 4 天起在不破坏 MVP 的前提下逐步实现。
+当前滚榜为 MVP 版：按输入榜单的名次（`rank`）倒序揭晓，不重新计算得分与排名。真实滚榜（`Submission` 数据、简化 ICPC 罚时、封榜解冻、排名变化）与事件识别均属于 MVP 之外的特色增强，计划第 4 天起在不破坏 MVP 的前提下逐步实现。
