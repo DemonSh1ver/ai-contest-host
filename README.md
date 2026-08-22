@@ -36,9 +36,10 @@
 
 ```text
 ai-contest-host/
-├── README.md                        # 项目说明
+├── README.md                        # 项目说明与启动说明
 ├── main.py                          # 程序入口
 ├── requirements.txt                 # 依赖（pyttsx3）
+├── .gitignore                       # 忽略虚拟环境、密钥、IDE 临时文件等
 ├── test_invalid.json                # 失败用例输入（teams 类型错误）
 ├── src/
 │   ├── parser.py                    # 榜单解析
@@ -57,29 +58,67 @@ ai-contest-host/
 
 ## 使用方法
 
+### 环境要求
+
+- Windows（TTS 走系统 SAPI5 语音引擎）
+- Python 3.9+（当前开发环境为 3.13）
+- 系统需安装中文 TTS 语音（Windows 自带 Microsoft Huihui Desktop - Chinese 即可）
+
+### 创建虚拟环境
+
+```bash
+python -m venv .venv
+```
+
+### 激活环境（Windows）
+
+```bash
+.venv\Scripts\activate
+```
+
 ### 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 播放样例排行榜（普通模式）
+### 启动
+
+播放默认样例（普通模式，从第 1 名到第 N 名播报）：
 
 ```bash
 python main.py
 ```
 
-### 滚榜模式（从最后一名倒序逐队揭晓）
+滚榜模式（从最后一名倒序逐队揭晓）：
 
 ```bash
 python main.py --roll
 ```
 
-### 播放自定义排行榜
+播放自定义排行榜：
 
 ```bash
 python main.py path/to/leaderboard.json
+python main.py path/to/leaderboard.json --roll
 ```
+
+### 停止方式
+
+程序播报完整场后自动退出；若需中途停止，按 `Ctrl+C`。
+
+### 环境变量
+
+当前版本不需要配置 API Key 或任何环境变量。
+
+### 首跑验证标准
+
+启动成功后应看到：
+
+1. 控制台打印完整中文主持词（开场 → 逐队揭晓 → 结果 → 颁奖 → 结束）；
+2. 出现 `[TTS] 已选用中文语音`，且扬声器朗读中文播报。
+
+若出现 `[TTS] 警告：未检测到中文语音`，说明系统缺少中文语音包，需在 Windows 设置中安装中文语音后重试。
 
 ## 当前开发阶段
 
@@ -89,4 +128,4 @@ python main.py path/to/leaderboard.json
 - 第 2 天：确定方案组成与技术选型（`json` + `pyttsx3` + `unittest`）。
 - 第 3 天：固定主路径数据对象（`Team` / `Leaderboard` / `RollStep` / 主持词文本）与调用约定（含成功、失败案例），跑通 `解析 → 滚榜 → 主持词 → TTS 播放` 完整链路，`python main.py` 可实际出声。
 
-当前滚榜为 MVP 版：按输入榜单的名次（`rank`）倒序揭晓，不重新计算得分与排名。真实滚榜（`Submission` 数据、简化 ICPC 罚时、封榜解冻、排名变化）与事件识别均属于 MVP 之外的特色增强，计划第 4 天起在不破坏 MVP 的前提下逐步实现。
+当前滚榜为 MVP 版：按输入榜单的名次（`rank`）倒序揭晓，不重新计算得分与排名。真实滚榜（`Submission` 数据、简化 ICPC 罚时、封榜解冻、排名变化）与事件识别均属于 MVP 之外的特色增强，计划第 5 天起在不破坏 MVP 的前提下逐步实现。

@@ -7,6 +7,7 @@
     python main.py path/to.json --roll # 指定榜单 + 滚榜模式
 """
 
+import json
 import sys
 
 from src.parser import parse_leaderboard_file
@@ -27,7 +28,18 @@ def main(argv):
         else:
             path = arg
 
-    lb = parse_leaderboard_file(path)
+    try:
+        lb = parse_leaderboard_file(path)
+    except FileNotFoundError:
+        print(f"[错误] 找不到榜单文件：{path}")
+        print("请确认路径正确，或使用默认样例：python main.py")
+        return 1
+    except json.JSONDecodeError:
+        print(f"[错误] 榜单文件不是合法的 JSON：{path}")
+        return 1
+    except ValueError as exc:
+        print(f"[错误] {exc}")
+        return 1
 
     if roll_mode:
         steps = reveal_order(lb.teams)
@@ -41,7 +53,8 @@ def main(argv):
 
     engine = init_engine()
     speak(engine, text)
+    return 0
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

@@ -7,6 +7,13 @@ venv/
 
 # IDE 临时文件
 .vscode/
+.idea/
+
+# 本机环境与密钥
+.env
+.env.*
+*.key
+*.pem
 
 # 运行/临时产物
 *.log
